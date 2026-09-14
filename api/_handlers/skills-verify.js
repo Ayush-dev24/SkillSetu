@@ -14,8 +14,8 @@
 // Zero-PII: only the skill name + evidence type/text (no unrelated profile
 // data) gets stored, and evidence text is capped.
 
-import { requireRole, getProfile } from '../auth-helpers.js';
-import supabase from '../db-client.js';
+import { requireRole, getProfile } from '../_auth-helpers.js';
+import supabase from '../_db-client.js';
 
 const REVIEW_ROLES = ['company', 'college', 'ministry'];
 const EVIDENCE_TYPES = new Set(['certificate', 'assessment', 'endorsement', 'project', 'other']);

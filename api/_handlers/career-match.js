@@ -19,8 +19,8 @@
 // ?refresh=1 always reruns; otherwise a 10-min in-memory cache serves the
 // dashboard view so navigation never re-runs the whole pipeline.
 
-import supabase from '../db-client.js';
-import { requireUser, getProfile } from '../auth-helpers.js';
+import supabase from '../_db-client.js';
+import { requireUser, getProfile } from '../_auth-helpers.js';
 import { mapProfileToJobFilters } from './career-match-profile.js';
 import { fetchVerifiedJobs } from './jobs-feed.js';
 import {
@@ -28,7 +28,7 @@ import {
   matchJobs,
   computeSkillGaps,
   summarizeProfile,
-} from '../lib/matching.js';
+} from '../_lib/matching.js';
 
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const cache = new Map(); // user_id -> { fetchedAt, payload }

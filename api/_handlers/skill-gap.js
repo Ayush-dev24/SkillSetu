@@ -1,4 +1,4 @@
-import supabase from '../db-client.js';
+import supabase from '../_db-client.js';
 
 function levelOf(pct) { return Math.max(1, Math.min(5, Math.round((pct || 0) / 20) || 1)); }
 

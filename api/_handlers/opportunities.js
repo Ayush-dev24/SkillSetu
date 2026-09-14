@@ -1,5 +1,5 @@
-import supabase from '../db-client.js';
-import { requireRole } from '../auth-helpers.js';
+import supabase from '../_db-client.js';
+import { requireRole } from '../_auth-helpers.js';
 
 const VALID_TYPES = new Set(['internship', 'micro-internship', 'same-day-task', 'part-time', 'full-time', 'challenge']);
 const VALID_URGENCY = new Set(['instant', 'soon', 'flexible']);

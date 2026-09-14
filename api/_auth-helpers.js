@@ -1,4 +1,4 @@
-import supabase from './db-client.js';
+import supabase from './_db-client.js';
 
 // Roles shared by the whole platform. Keep in sync with the frontend
 // ROLE_META + the auth user_metadata.role written at sign-up.

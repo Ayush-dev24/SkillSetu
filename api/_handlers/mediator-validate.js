@@ -149,5 +149,5 @@ export {
   buildImproveMyMatch,
   categorizeRecommendations,
   categoryOfScore,
-} from '../lib/matching.js';
-export { scoreAssessment, getLevelFromScore, outcomeForAssessment, ASSESSMENTS } from '../lib/assessments.js';
+} from '../_lib/matching.js';
+export { scoreAssessment, getLevelFromScore, outcomeForAssessment, ASSESSMENTS } from '../_lib/assessments.js';

@@ -59,12 +59,12 @@ function resolveApiPath(urlPath) {
   if (!rel) return null;
 
   if (rel === 'skills/verify') {
-    const sv = join(__dirname, 'api', 'handlers', 'skills-verify.js');
+    const sv = join(__dirname, 'api', '_handlers', 'skills-verify.js');
     if (existsSync(sv)) return sv;
   }
 
-  // Check handlers directory: api/handlers/<name>.js
-  const handlerFile = join(__dirname, 'api', 'handlers', `${rel}.js`);
+  // Check _handlers directory: api/_handlers/<name>.js
+  const handlerFile = join(__dirname, 'api', '_handlers', `${rel}.js`);
   if (existsSync(handlerFile)) return handlerFile;
 
   // Fallback to top-level api/ directory
