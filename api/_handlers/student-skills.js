@@ -48,6 +48,76 @@ export default async function handler(req, res) {
     }
     if (req.method === 'PUT') {
       const b = req.body || {};
+      
+      // Support Bulk Skill Approval
+      if (b.action === 'bulk_approve') {
+        const auth = await requireRole(req, res, ['company', 'college', 'ministry']);
+        if (!auth) return;
+
+        const skillIds = Array.isArray(b.skill_ids) ? b.skill_ids.map(Number) : [];
+        const studentIds = Array.isArray(b.student_ids) ? b.student_ids.map(Number) : [];
+
+        if (!skillIds.length && !studentIds.length) {
+          return res.status(400).json({ error: 'skill_ids or student_ids required for bulk approval.' });
+        }
+
+        const now = new Date().toISOString();
+        const verifier = auth.profile?.email || 'College Administrator / Teacher';
+        const remark = String(b.teacher_remark || 'Bulk College Approval').slice(0, 200);
+
+        // Fetch targeting rows that are ONLY pending (not already verified or rejected)
+        let query = supabase.from('student_skills').select('*');
+        if (skillIds.length > 0) {
+          query = query.in('id', skillIds);
+        } else if (studentIds.length > 0) {
+          query = query.in('student_id', studentIds);
+        }
+
+        const { data: targetRows, error: fetchErr } = await query;
+        if (fetchErr) throw fetchErr;
+
+        // Filter out already verified or rejected skills unless explicitly targeted by skillId
+        const pendingRows = (targetRows || []).filter((r) => {
+          if (r.verification_decision === 'REJECTED') return false;
+          if (r.verification_decision === 'COLLEGE VERIFIED' || r.verified === true) return false;
+          return true;
+        });
+
+        const targetIdsToApprove = pendingRows.map((r) => r.id);
+
+        if (targetIdsToApprove.length === 0) {
+          return res.status(200).json({ approved_count: 0, message: 'No pending skills found to approve.' });
+        }
+
+        const patch = {
+          verified: true,
+          source: 'College Verified',
+          verification_decision: 'COLLEGE VERIFIED',
+          verified_by: verifier,
+          decision_timestamp: now,
+          teacher_remark: remark,
+        };
+
+        let { error: updateErr } = await supabase.from('student_skills').update(patch).in('id', targetIdsToApprove);
+        
+        if (updateErr && (updateErr.message.includes('verification_decision') || updateErr.message.includes('verified_by'))) {
+          // Fallback patch for base DB schema
+          const fallbackPatch = { verified: true, source: 'College Verified' };
+          const res2 = await supabase.from('student_skills').update(fallbackPatch).in('id', targetIdsToApprove);
+          updateErr = res2.error;
+        }
+
+        if (updateErr) throw updateErr;
+
+        return res.status(200).json({
+          ok: true,
+          approved_count: targetIdsToApprove.length,
+          approved_ids: targetIdsToApprove,
+          verified_by: verifier,
+          timestamp: now,
+        });
+      }
+
       if (!b.id) return res.status(400).json({ error: 'id is required' });
       const { data: existing } = await supabase.from('student_skills').select('student_id').eq('id', b.id).single();
       if (!existing) return res.status(404).json({ error: 'Skill not found.' });
