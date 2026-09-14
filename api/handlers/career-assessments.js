@@ -9,10 +9,10 @@
 // clients can never tamper with results. After a successful submit callers
 // should trigger /api/career-match?refresh=1 so verification updates.
 
-import { requireUser } from './auth-helpers.js';
-import supabase from './db-client.js';
-import { getAssessment, outcomeForAssessment } from './lib/assessments.js';
-import { inferSkillVerification } from './lib/matching.js';
+import { requireUser } from '../auth-helpers.js';
+import supabase from '../db-client.js';
+import { getAssessment, outcomeForAssessment } from '../lib/assessments.js';
+import { inferSkillVerification } from '../lib/matching.js';
 
 const ALLOWED = new Set(['start', 'submit']);
 

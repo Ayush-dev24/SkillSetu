@@ -7,8 +7,8 @@
 // These are the ONLY fields that shape matching beyond the skill map. They are
 // stored per-student (profile_prefs table) and consumed by /api/career-match.
 
-import { requireRole } from './auth-helpers.js';
-import supabase from './db-client.js';
+import { requireRole } from '../auth-helpers.js';
+import supabase from '../db-client.js';
 
 const LISTS = ['preferred_roles', 'preferred_locations', 'preferred_work_modes'];
 const WORK_MODES = new Set(['REMOTE', 'HYBRID', 'ON_SITE']);

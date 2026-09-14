@@ -15,35 +15,8 @@
     "MEDIATOR_API_KEY": ""
   },
   "rewrites": [
-    { "source": "/api/jobs-feed", "destination": "/api/jobs-feed" },
-    { "source": "/api/students", "destination": "/api/students" },
-    { "source": "/api/student-skills", "destination": "/api/student-skills" },
-    { "source": "/api/opportunities", "destination": "/api/opportunities" },
-    { "source": "/api/companies", "destination": "/api/companies" },
-    { "source": "/api/careers", "destination": "/api/careers" },
-    { "source": "/api/courses", "destination": "/api/courses" },
-    { "source": "/api/skill-demand", "destination": "/api/skill-demand" },
-    { "source": "/api/skill-gap", "destination": "/api/skill-gap" },
-    { "source": "/api/placements", "destination": "/api/placements" },
-    { "source": "/api/applications", "destination": "/api/applications" },
-    { "source": "/api/certificates", "destination": "/api/certificates" },
-    { "source": "/api/task-workspaces", "destination": "/api/task-workspaces" },
-    { "source": "/api/profiles", "destination": "/api/profiles" },
-    { "source": "/api/career-match", "destination": "/api/career-match" },
-    { "source": "/api/career/assessments", "destination": "/api/career-assessments" },
-    { "source": "/api/career-match-profile", "destination": "/api/career-match-profile" },
-    { "source": "/api/placement-overview", "destination": "/api/placement-overview" },
-    { "source": "/api/placement-student-status", "destination": "/api/placement-student-status" },
-    { "source": "/api/student-portfolio", "destination": "/api/student-portfolio" },
-    { "source": "/api/student-internships-active", "destination": "/api/student-internships-active" },
-    { "source": "/api/db-wake", "destination": "/api/db-wake" },
-    { "source": "/api/mediator-validate", "destination": "/api/mediator-validate" },
-    { "source": "/api/profile-prefs", "destination": "/api/profile-prefs" },
-    { "source": "/api/skills/verify", "destination": "/api/skills/verify" },
-    { "source": "/api/v1/placement/student-status", "destination": "/api/placement-student-status" },
-    { "source": "/api/v1/placement/overview", "destination": "/api/placement-overview" },
-    { "source": "/api/v1/student/portfolio", "destination": "/api/student-portfolio" },
-    { "source": "/api/v1/student/internships/active", "destination": "/api/student-internships-active" },
+    { "source": "/api/(.*)", "destination": "/api/index?path=$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
+
 }

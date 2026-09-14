@@ -55,21 +55,21 @@ async function loadHandler(filePath) {
 /** Map /api/<name> to the absolute path of the serverless function file. */
 function resolveApiPath(urlPath) {
   // Strip /api/ prefix and decode
-  const rel = urlPath.replace(/^\/api\//, '').replace(/\/$/, '');
+  const rel = urlPath.replace(/^\/api\//, '').replace(/\/$/, '').split('?')[0];
   if (!rel) return null;
 
-  // Exact file match: api/students.js, api/career-match.js, etc.
+  if (rel === 'skills/verify') {
+    const sv = join(__dirname, 'api', 'handlers', 'skills-verify.js');
+    if (existsSync(sv)) return sv;
+  }
+
+  // Check handlers directory: api/handlers/<name>.js
+  const handlerFile = join(__dirname, 'api', 'handlers', `${rel}.js`);
+  if (existsSync(handlerFile)) return handlerFile;
+
+  // Fallback to top-level api/ directory
   const exact = join(__dirname, 'api', `${rel}.js`);
   if (existsSync(exact)) return exact;
-
-  // Nested: api/skills/verify.js
-  const nested = join(__dirname, 'api', `${rel}`, 'index.js');
-  if (existsSync(nested)) return nested;
-
-  // Also try without the query suffix
-  const clean = rel.split('?')[0];
-  const cleanExact = join(__dirname, 'api', `${clean}.js`);
-  if (existsSync(cleanExact)) return cleanExact;
 
   return null;
 }

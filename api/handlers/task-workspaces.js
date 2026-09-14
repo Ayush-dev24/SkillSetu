@@ -1,5 +1,5 @@
-import supabase from './db-client.js';
-import { requireRole } from './auth-helpers.js';
+import supabase from '../db-client.js';
+import { requireRole } from '../auth-helpers.js';
 
 const STUDENT_STAGES = new Set(['accepted', 'submitted']);
 const COMPANY_STAGES = new Set(['accepted', 'submitted', 'approved', 'rejected']);

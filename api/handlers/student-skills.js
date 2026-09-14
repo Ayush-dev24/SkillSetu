@@ -1,5 +1,5 @@
-import supabase from './db-client.js';
-import { requireRole } from './auth-helpers.js';
+import supabase from '../db-client.js';
+import { requireRole } from '../auth-helpers.js';
 
 async function ownsStudent(auth, studentId) {
   // Linked accounts are pinned to their row; legacy demo accounts without a

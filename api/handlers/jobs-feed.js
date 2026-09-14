@@ -1,4 +1,4 @@
-import supabase from './db-client.js';
+import supabase from '../db-client.js';
 
 // ---------------------------------------------------------------------------
 // Server-side proxy for the External Verified Jobs Service (TrustJob.in v1.2.0)
