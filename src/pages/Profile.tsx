@@ -3,7 +3,7 @@ import { ShieldCheck, UploadCloud, Plus, Flame, Award, Sparkles, FileText, Badge
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useCareerMatch } from '../context/CareerMatchContext';
-import { extractSkillsFromText, apiSend, readinessTier, smartFetch, skillVerificationMeta } from '../lib/engine';
+import { extractSkillsFromText, apiSend, readinessTier, smartFetch, skillVerificationMeta, getSkillEvidenceTier } from '../lib/engine';
 import { SectionTitle, Chip, ReadinessRing, SkillBar, Stat } from '../components/ui';
 import OpportunityCard from '../components/OpportunityCard';
 import CareerMatchSection from '../components/CareerMatchSection';
@@ -19,7 +19,7 @@ const BADGES = [
 ];
 
 export default function Profile() {
-  const { student, mySkills, myApplications, opportunities, refresh } = useApp();
+  const { student, mySkills, myApplications, myCertificates, opportunities, refresh } = useApp();
   const { profile, authToken, signOut } = useAuth();
   const { refresh: refreshCareerMatch, result: matchResult } = useCareerMatch();
   const [resume, setResume] = useState(student?.resume_text ?? '');
@@ -39,9 +39,9 @@ export default function Profile() {
   const suggestions = useMemo(() => {
     if (!student) return [];
     return [...opportunities.filter((o) => o.status === 'open')]
-      .map((o) => ({ o, s: matchForOpportunity(mySkills, o).score }))
+      .map((o) => ({ o, s: matchForOpportunity(mySkills, o, myCertificates).score }))
       .sort((a, b) => b.s - a.s).slice(0, 2).map((x) => x.o);
-  }, [opportunities, mySkills, student]);
+  }, [opportunities, mySkills, myCertificates, student]);
 
   if (!student) return <div className="p-8">Loading profile…</div>;
 
@@ -203,40 +203,52 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Skill map */}
+        {/* Skill map with evidence tier categorization */}
         <div className="rounded-2xl border border-[#e5dcc3] bg-white p-5 card-shadow">
-          <p className="mb-1 flex items-center gap-1.5 font-bold text-[#07382c]"><BadgeCheck size={17} className="text-[#0d7a5f]" /> Skill map · {mySkills.length} skills</p>
-          <p className="mb-3 text-[13px] text-[#5a6a62]">Green shields are verified by college/company. Unverified skills can be endorsed after gigs.</p>
-          <div className="grid max-h-[380px] gap-2 overflow-y-auto pr-1">
+          <p className="mb-1 flex items-center gap-1.5 font-bold text-[#07382c]">
+            <BadgeCheck size={17} className="text-[#0d7a5f]" /> Skill map · {mySkills.length} skills
+          </p>
+          <p className="mb-3 text-[13px] text-[#5a6a62]">
+            Skills categorized by evidence strength: <b>College Verified</b> (Strongest), <b>Certificate Supported</b> (Medium), <b>Self Declared</b> (Basic).
+          </p>
+          <div className="grid max-h-[420px] gap-2 overflow-y-auto pr-1">
             {mySkills.map((s) => {
-              const decision = s.verification_decision || (s.verified ? 'COLLEGE VERIFIED' : 'NOT VERIFIED');
+              const tierInfo = getSkillEvidenceTier(s, myCertificates);
               return (
                 <div key={s.id} className="group relative">
-                  <SkillBar name={s.skill_name} pct={s.proficiency_pct} verified={s.verified} />
+                  <SkillBar name={s.skill_name} pct={s.proficiency_pct} verified={tierInfo.tier === 'COLLEGE VERIFIED'} />
                   <div className="mt-1 flex flex-wrap items-center justify-between px-1 text-[11px] font-semibold text-[#8a978f]">
                     <div className="flex items-center gap-1.5">
                       <span>{s.category} · {s.source}</span>
-                      {decision === 'COLLEGE VERIFIED' && (
-                        <span className="rounded-full bg-[#0d7a5f] px-2 py-0.2 text-[10px] font-black text-white">
-                          COLLEGE VERIFIED
-                        </span>
-                      )}
-                      {decision === 'REJECTED' && (
-                        <span className="rounded-full bg-[#dc2626] px-2 py-0.2 text-[10px] font-black text-white">
-                          REJECTED
-                        </span>
-                      )}
+                      <span
+                        className="rounded-full px-2 py-0.2 text-[10px] font-black"
+                        style={{ background: tierInfo.badgeBg, color: tierInfo.badgeText }}
+                      >
+                        {tierInfo.label}
+                      </span>
                     </div>
-                    <button onClick={() => removeSkill(s.id)} className="flex items-center gap-0.5 text-[#dc2626]/70 hover:text-[#dc2626]"><Trash2 size={12} /> remove</button>
+                    <button onClick={() => removeSkill(s.id)} className="flex items-center gap-0.5 text-[#dc2626]/70 hover:text-[#dc2626]">
+                      <Trash2 size={12} /> remove
+                    </button>
                   </div>
                 </div>
               );
             })}
             {mySkills.length === 0 && <p className="text-sm text-gray-500">No skills yet — parse your resume to begin.</p>}
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Stat label="Verified skills" value={`${verifiedCount}`} accent="#0d7a5f" />
-            <Stat label="Applications" value={`${myApplications.length}`} accent="#2563eb" />
+          <div className="mt-3 grid grid-cols-3 gap-1.5 text-center text-xs">
+            <div className="rounded-lg bg-[#effaf4] p-2">
+              <p className="font-bold text-[#0d7a5f]">{mySkills.filter((s) => getSkillEvidenceTier(s, myCertificates).tier === 'COLLEGE VERIFIED').length}</p>
+              <p className="text-[10px] text-[#5a6a62]">College Verified</p>
+            </div>
+            <div className="rounded-lg bg-[#eff6ff] p-2">
+              <p className="font-bold text-[#2563eb]">{mySkills.filter((s) => getSkillEvidenceTier(s, myCertificates).tier === 'CERTIFICATE SUPPORTED').length}</p>
+              <p className="text-[10px] text-[#5a6a62]">Cert Supported</p>
+            </div>
+            <div className="rounded-lg bg-[#faf7ef] p-2">
+              <p className="font-bold text-[#3c4a44]">{mySkills.filter((s) => getSkillEvidenceTier(s, myCertificates).tier === 'SELF DECLARED').length}</p>
+              <p className="text-[10px] text-[#5a6a62]">Self Declared</p>
+            </div>
           </div>
         </div>
       </div>

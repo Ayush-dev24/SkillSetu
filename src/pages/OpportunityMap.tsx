@@ -13,7 +13,7 @@ import { SectionTitle, Chip, Empty } from '../components/ui';
 const RADII = [50, 150, 500, 2000];
 
 export default function OpportunityMap() {
-  const { opportunities, companies, mySkills, loading, feed, feedMeta, feedLoading, fetchFeed } = useApp();
+  const { opportunities, companies, mySkills, myCertificates, loading, feed, feedMeta, feedLoading, fetchFeed } = useApp();
   const { isAuthed, authToken } = useAuth();
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -212,7 +212,7 @@ export default function OpportunityMap() {
         if (cluster.length > 1) {
           const lat = cluster.reduce((sum, row) => sum + row.lat, 0) / cluster.length;
           const lng = cluster.reduce((sum, row) => sum + row.lng, 0) / cluster.length;
-          const topScore = Math.max(...cluster.map(({ o, feedJob }) => feedJob?.trust_score ?? matchForOpportunity(mySkills, o).score));
+          const topScore = Math.max(...cluster.map(({ o, feedJob }) => feedJob?.trust_score ?? matchForOpportunity(mySkills, o, myCertificates).score));
           const clusterIcon = L.divIcon({
             className: '',
             html: `<div style="display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:linear-gradient(145deg,#07382c,#0d7a5f);border:3px solid #fff;box-shadow:0 5px 16px rgba(7,56,44,.35);color:#fff;font:900 14px Inter,sans-serif;"><span>${cluster.length}</span><small style="display:block;font-size:9px;line-height:9px;opacity:.82;">jobs</small></div>`,

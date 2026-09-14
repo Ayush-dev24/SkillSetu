@@ -14,14 +14,14 @@ const URGENCY_STYLE: Record<string, { label: string; bg: string; fg: string }> =
 };
 
 export default function OpportunityCard({ opp, skills, compact, distanceKm, userCoords, destCoords }: { opp: Opportunity; skills: StudentSkill[]; compact?: boolean; distanceKm?: number | null; userCoords?: GeoPoint | null; destCoords?: GeoPoint | null }) {
-  const { student, companyOf, myApplications, refresh } = useApp();
+  const { student, companyOf, myApplications, myCertificates, refresh } = useApp();
   const { isAuthed, authToken } = useAuth();
   const [showMatch, setShowMatch] = useState(false);
   const [applying, setApplying] = useState(false);
   const [msg, setMsg] = useState('');
   const [note, setNote] = useState('');
 
-  const match = matchForOpportunity(skills, opp);
+  const match = matchForOpportunity(skills, opp, myCertificates);
   const already = myApplications.some((a) => String(a.opportunity_id) === String(opp.id));
   const co = companyOf(opp.company_id);
   const meta = oppTypeMeta(opp.type);

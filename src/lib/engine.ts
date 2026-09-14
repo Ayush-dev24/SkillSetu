@@ -101,7 +101,66 @@ export const oppTypeMeta = (t: string) =>
 
 export const AVATAR_COLORS = ['#0d7a5f', '#2563eb', '#7c3aed', '#e8930c', '#dc2626', '#0e7490'];
 
-const norm = (s: string) => s.trim().toLowerCase();
+export type SkillEvidenceTier = 'COLLEGE VERIFIED' | 'CERTIFICATE SUPPORTED' | 'REJECTED' | 'SELF DECLARED';
+
+/**
+ * Determine evidence strength tier for a student skill given active certificates.
+ */
+export function getSkillEvidenceTier(skill: StudentSkill, certificates: Certificate[] = []): {
+  tier: SkillEvidenceTier;
+  label: string;
+  weightMultiplier: number;
+  badgeBg: string;
+  badgeText: string;
+} {
+  const dec = skill.verification_decision || (skill.verified ? 'COLLEGE VERIFIED' : 'NOT VERIFIED');
+
+  if (dec === 'REJECTED') {
+    return {
+      tier: 'REJECTED',
+      label: 'REJECTED',
+      weightMultiplier: 0.0,
+      badgeBg: '#dc2626',
+      badgeText: '#ffffff',
+    };
+  }
+
+  if (dec === 'COLLEGE VERIFIED' || skill.verified) {
+    return {
+      tier: 'COLLEGE VERIFIED',
+      label: 'COLLEGE VERIFIED',
+      weightMultiplier: 1.0, // Strong evidence
+      badgeBg: '#0d7a5f',
+      badgeText: '#ffffff',
+    };
+  }
+
+  // Check if supported by any certificate
+  const hasCert = certificates.some(
+    (c) =>
+      c.student_id === skill.student_id &&
+      (c.skills_validated?.some((sk) => sk.toLowerCase() === skill.skill_name.toLowerCase()) ||
+        c.opportunity_title.toLowerCase().includes(skill.skill_name.toLowerCase()))
+  );
+
+  if (hasCert || skill.source === 'Certificate Upload') {
+    return {
+      tier: 'CERTIFICATE SUPPORTED',
+      label: 'CERTIFICATE SUPPORTED',
+      weightMultiplier: 0.75, // Medium evidence
+      badgeBg: '#2563eb',
+      badgeText: '#ffffff',
+    };
+  }
+
+  return {
+    tier: 'SELF DECLARED',
+    label: 'SELF DECLARED',
+    weightMultiplier: 0.5, // Basic evidence
+    badgeBg: '#e5dcc3',
+    badgeText: '#07382c',
+  };
+}
 
 export function levelOf(pct: number) {
   return Math.max(1, Math.min(5, Math.round((pct || 0) / 20) || 1));
@@ -117,7 +176,8 @@ export interface MatchResult {
 }
 
 /** Match a student's skills against an opportunity's required skills. */
-export function matchForOpportunity(skills: StudentSkill[], opp: Opportunity): MatchResult {
+export function matchForOpportunity(skills: StudentSkill[], opp: Opportunity, certificates: Certificate[] = []): MatchResult {
+  const norm = (s: string) => s.trim().toLowerCase();
   const byName: Record<string, StudentSkill> = {};
   skills.forEach((s) => { byName[norm(s.skill_name)] = s; });
   const req = opp.skills_required || [];
@@ -127,25 +187,45 @@ export function matchForOpportunity(skills: StudentSkill[], opp: Opportunity): M
   let got = 0;
   const matched: string[] = [];
   const missing: { skill: string; required: number; current: number }[] = [];
+  const evidenceDetails: string[] = [];
+
   req.forEach((r, i) => {
     const mine = byName[norm(r)];
     const need = 2 + (i % 2); // required level heuristic 2–3
     if (mine) {
-      const lv = levelOf(mine.proficiency_pct);
-      if (lv >= need - 1) { got += 1; matched.push(r); }
-      else { got += 0.45; missing.push({ skill: r, required: need, current: lv }); }
+      const tierInfo = getSkillEvidenceTier(mine, certificates);
+      if (tierInfo.tier === 'REJECTED') {
+        // Rejected skills are NEVER treated as verified or valid evidence
+        missing.push({ skill: r, required: need, current: 0 });
+      } else {
+        const lv = levelOf(mine.proficiency_pct);
+        if (lv >= need - 1) {
+          // Weight evidence strength: College Verified (1.0), Cert Supported (0.85), Self Declared (0.65)
+          got += tierInfo.weightMultiplier;
+          matched.push(r);
+          evidenceDetails.push(`${r} — ${tierInfo.tier === 'COLLEGE VERIFIED' ? 'College Verified' : tierInfo.tier === 'CERTIFICATE SUPPORTED' ? 'Certificate Supported' : 'Self Declared'}`);
+        } else {
+          got += 0.45 * tierInfo.weightMultiplier;
+          missing.push({ skill: r, required: need, current: lv });
+        }
+      }
     } else {
       missing.push({ skill: r, required: need, current: 0 });
     }
   });
+
   const coverage = got / req.length;
   let score = Math.round(28 + coverage * 68 + (opp.urgency === 'instant' ? 2 : 0));
   score = Math.max(12, Math.min(98, score));
   const explanation: string[] = [];
-  if (matched.length) explanation.push(`You already hold ${matched.length} of ${req.length} required skills (${matched.slice(0, 3).join(', ')}${matched.length > 3 ? '…' : ''}).`);
+  if (matched.length) {
+    explanation.push(`Matched ${matched.length} of ${req.length} required skills: ${evidenceDetails.slice(0, 3).join(', ')}${evidenceDetails.length > 3 ? '…' : ''}.`);
+  }
   if (!matched.length) explanation.push('New skill territory — this task will stretch you in exactly the right direction.');
-  if (missing.length) explanation.push(`Missing or weak: ${missing.slice(0, 3).map((m) => m.skill).join(', ')}.`);
-  if (skills.some((s) => s.verified)) explanation.push('Your verified skills boost employer trust for this role.');
+  if (missing.length) explanation.push(`Missing or unverified: ${missing.slice(0, 3).map((m) => m.skill).join(', ')}.`);
+  if (skills.some((s) => s.verification_decision === 'COLLEGE VERIFIED' || s.verified)) {
+    explanation.push('Your College Verified skills provide strong evidence for employers.');
+  }
   if (opp.urgency === 'instant') explanation.push('Instant start — the employer is hiring today, so fast applicants get priority review.');
   const prep = missing.slice(0, 3).map((m) =>
     m.current === 0 ? `Crash-course ${m.skill} (basics + one mini build)` : `Level up ${m.skill} from L${m.current} → L${m.required} with a guided project`
