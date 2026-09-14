@@ -25,3 +25,6 @@ dist-ssr
 .vite-source-tags.js
 .vercel
 .kilo
+.env
+.env.local
+!.env.example
