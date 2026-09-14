@@ -1,15 +1,11 @@
 import applications from './_handlers/applications.js';
 import careerAssessments from './_handlers/career-assessments.js';
-import careerMatchProfile from './_handlers/career-match-profile.js';
 import careerMatch from './_handlers/career-match.js';
 import careers from './_handlers/careers.js';
 import certificates from './_handlers/certificates.js';
 import companies from './_handlers/companies.js';
 import courses from './_handlers/courses.js';
-import dbWake from './_handlers/db-wake.js';
 import jobsFeed from './_handlers/jobs-feed.js';
-import mediatorValidate from './_handlers/mediator-validate.js';
-import mediator from './_handlers/mediator.js';
 import opportunities from './_handlers/opportunities.js';
 import placementOverview from './_handlers/placement-overview.js';
 import placementStudentStatus from './_handlers/placement-student-status.js';
@@ -29,16 +25,12 @@ const routes = {
   'applications': applications,
   'career-assessments': careerAssessments,
   'career/assessments': careerAssessments,
-  'career-match-profile': careerMatchProfile,
   'career-match': careerMatch,
   'careers': careers,
   'certificates': certificates,
   'companies': companies,
   'courses': courses,
-  'db-wake': dbWake,
   'jobs-feed': jobsFeed,
-  'mediator-validate': mediatorValidate,
-  'mediator': mediator,
   'opportunities': opportunities,
   'placement-overview': placementOverview,
   'v1/placement/overview': placementOverview,
@@ -61,7 +53,7 @@ const routes = {
 
 export default async function handler(req, res) {
   let routePath = '';
-  
+
   if (req.query && req.query.path) {
     routePath = Array.isArray(req.query.path) ? req.query.path.join('/') : String(req.query.path);
   } else if (req.url) {

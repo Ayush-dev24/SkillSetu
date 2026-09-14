@@ -21,7 +21,7 @@
 
 import supabase from '../_db-client.js';
 import { requireUser, getProfile } from '../_auth-helpers.js';
-import { mapProfileToJobFilters } from './career-match-profile.js';
+import { mapProfileToJobFilters } from '../_lib/career-match-profile.js';
 import { fetchVerifiedJobs } from './jobs-feed.js';
 import {
   verifySkills,
