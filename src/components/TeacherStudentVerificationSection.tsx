@@ -549,12 +549,45 @@ export function TeacherStudentVerificationSection() {
                 </div>
               )}
 
+              <div className="border-t border-[#ece2c8] pt-2.5">
+                <p className="font-black uppercase tracking-wider text-[#0d7a5f]">5. College Endorsement & Audit Trail</p>
+                <div className="mt-1 space-y-1 text-[#3c4a44]">
+                  <p>
+                    <strong>Decision:</strong>{' '}
+                    <span
+                      className={`font-bold ${
+                        selectedEvidenceModal.skill.verification_decision === 'COLLEGE VERIFIED'
+                          ? 'text-[#0d7a5f]'
+                          : selectedEvidenceModal.skill.verification_decision === 'REJECTED'
+                          ? 'text-[#dc2626]'
+                          : 'text-[#3c4a44]'
+                      }`}
+                    >
+                      {selectedEvidenceModal.skill.verification_decision || (selectedEvidenceModal.skill.verified ? 'COLLEGE VERIFIED' : 'NOT VERIFIED')}
+                    </span>
+                  </p>
+                  <p>
+                    <strong>Evaluated By:</strong> {selectedEvidenceModal.skill.verified_by || 'Pending College Review'}
+                  </p>
+                  {selectedEvidenceModal.skill.decision_timestamp && (
+                    <p>
+                      <strong>Date / Time:</strong> {new Date(selectedEvidenceModal.skill.decision_timestamp).toLocaleString()}
+                    </p>
+                  )}
+                  {selectedEvidenceModal.skill.teacher_remark && (
+                    <p className="italic text-[#b45309]">
+                      <strong>Teacher Remark:</strong> "{selectedEvidenceModal.skill.teacher_remark}"
+                    </p>
+                  )}
+                </div>
+              </div>
+
               <div className="flex justify-end border-t border-[#ece2c8] pt-3">
                 <button
                   onClick={() => setSelectedEvidenceModal(null)}
                   className="rounded-xl bg-[#0d7a5f] px-5 py-2 font-bold text-white hover:bg-[#0b6a52]"
                 >
-                  Close
+                  Close Audit Evidence
                 </button>
               </div>
             </div>

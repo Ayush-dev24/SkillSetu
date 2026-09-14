@@ -19,7 +19,7 @@ function Bar({ label, value, max, color, sub }: { label: string; value: number; 
 }
 
 export default function College() {
-  const { demand, placements, students, allSkills, opportunities, careers } = useApp();
+  const { demand, placements, students, allSkills, certificates, opportunities, careers } = useApp();
 
   const avgBySkill = useMemo(() => {
     const map: Record<string, { sum: number; n: number }> = {};
@@ -48,6 +48,24 @@ export default function College() {
 
   const readinessAvg = students.length ? Math.round(students.reduce((s, x) => s + x.readiness_score, 0) / students.length) : 0;
 
+  // Verification breakdown statistics across all student skills
+  const certVerifiedCount = useMemo(() => {
+    return allSkills.filter((s) => {
+      const dec = s.verification_decision || (s.verified ? 'COLLEGE VERIFIED' : 'NOT VERIFIED');
+      if (dec === 'COLLEGE VERIFIED' || s.verified) return false;
+      return certificates.some(
+        (c) =>
+          c.student_id === s.student_id &&
+          (c.skills_validated?.some((sk) => sk.toLowerCase() === s.skill_name.toLowerCase()) ||
+            c.opportunity_title.toLowerCase().includes(s.skill_name.toLowerCase()))
+      );
+    }).length;
+  }, [allSkills, certificates]);
+
+  const collegeVerifiedCount = allSkills.filter((s) => s.verification_decision === 'COLLEGE VERIFIED' || s.verified).length;
+  const rejectedCount = allSkills.filter((s) => s.verification_decision === 'REJECTED').length;
+  const pendingCount = allSkills.length - collegeVerifiedCount - rejectedCount;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <SectionTitle kicker="College insights · AIIA" title="Industry Skill Demand Dashboard"
@@ -58,6 +76,36 @@ export default function College() {
         <Stat label="Avg. readiness" value={`${readinessAvg}/100`} accent="#2563eb" />
         <Stat label="Open industry roles" value={`${opportunities.filter((o) => o.status === 'open').length}`} accent="#e8930c" />
         <Stat label="Placements tracked" value={`${placements.length}`} accent="#7c3aed" />
+      </div>
+
+      {/* Skill Verification Dashboard Summary */}
+      <div className="mb-6 rounded-2xl border border-[#e5dcc3] bg-white p-4 card-shadow">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-display text-sm font-bold text-[#07382c]">Skill Verification Overview</span>
+          <span className="text-xs font-semibold text-[#5a6a62]">{allSkills.length} Total Student Skills</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 text-center text-xs">
+          <div className="rounded-xl bg-[#faf7ef] p-2.5">
+            <p className="font-display text-lg font-black text-[#07382c]">{allSkills.length}</p>
+            <p className="text-[11px] font-bold text-[#5a6a62]">Total Skills</p>
+          </div>
+          <div className="rounded-xl bg-[#fffbeb] p-2.5">
+            <p className="font-display text-lg font-black text-[#b45309]">{pendingCount}</p>
+            <p className="text-[11px] font-bold text-[#b45309]">Pending Verification</p>
+          </div>
+          <div className="rounded-xl bg-[#effaf4] p-2.5">
+            <p className="font-display text-lg font-black text-[#0d7a5f]">{collegeVerifiedCount}</p>
+            <p className="text-[11px] font-bold text-[#0d7a5f]">College Verified</p>
+          </div>
+          <div className="rounded-xl bg-[#fef2f2] p-2.5">
+            <p className="font-display text-lg font-black text-[#dc2626]">{rejectedCount}</p>
+            <p className="text-[11px] font-bold text-[#dc2626]">Rejected</p>
+          </div>
+          <div className="rounded-xl bg-[#eff6ff] p-2.5">
+            <p className="font-display text-lg font-black text-[#2563eb]">{certVerifiedCount}</p>
+            <p className="text-[11px] font-bold text-[#2563eb]">Cert Verified</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

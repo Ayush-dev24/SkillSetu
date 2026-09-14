@@ -205,9 +205,14 @@ export default function Profile() {
 
         {/* Skill map with evidence tier categorization */}
         <div className="rounded-2xl border border-[#e5dcc3] bg-white p-5 card-shadow">
-          <p className="mb-1 flex items-center gap-1.5 font-bold text-[#07382c]">
-            <BadgeCheck size={17} className="text-[#0d7a5f]" /> Skill map · {mySkills.length} skills
-          </p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 font-bold text-[#07382c]">
+              <BadgeCheck size={17} className="text-[#0d7a5f]" /> Skill map · {mySkills.length} skills
+            </p>
+            <span className="rounded-full bg-[#effaf4] px-3 py-1 text-xs font-bold text-[#0d7a5f] border border-[#0d7a5f33]">
+              {mySkills.length} Skills — {mySkills.filter((s) => getSkillEvidenceTier(s, myCertificates).tier === 'COLLEGE VERIFIED').length} College Verified, {mySkills.filter((s) => getSkillEvidenceTier(s, myCertificates).tier === 'CERTIFICATE SUPPORTED').length} Certificate Supported, {mySkills.filter((s) => getSkillEvidenceTier(s, myCertificates).tier === 'SELF DECLARED').length} Pending
+            </span>
+          </div>
           <p className="mb-3 text-[13px] text-[#5a6a62]">
             Skills categorized by evidence strength: <b>College Verified</b> (Strongest), <b>Certificate Supported</b> (Medium), <b>Self Declared</b> (Basic).
           </p>
