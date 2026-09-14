@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-herb-50: #effaf4;
+  --color-herb-100: #d7f0e3;
+  --color-herb-500: #0d7a5f;
+  --color-herb-600: #0b6a52;
+  --color-herb-700: #095844;
+  --color-herb-900: #07382c;
+  --color-saffron-400: #f5a623;
+  --color-saffron-500: #e8930c;
+  --color-cream: #faf7ef;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  background: #faf7ef;
+  color: #1c2420;
+  -webkit-font-smoothing: antialiased;
+}
+.font-display { font-family: "Fraunces", Georgia, serif; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #efe9d8; }
+::-webkit-scrollbar-thumb { background: #0d7a5f; border-radius: 8px; }
+
+.card-shadow { box-shadow: 0 1px 2px rgba(7,56,44,.06), 0 8px 28px -12px rgba(7,56,44,.18); }
+.card-shadow-lg { box-shadow: 0 2px 6px rgba(7,56,44,.08), 0 20px 50px -20px rgba(7,56,44,.35); }
+
+.hero-pattern {
+  background-image: radial-gradient(rgba(255,255,255,.14) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+.dot-grid {
+  background-image: radial-gradient(rgba(13,122,95,.16) 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
+}
+.pulse-dot { animation: pulsedot 1.6s ease-in-out infinite; }
+@keyframes pulsedot { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: .45; transform: scale(.72);} }
+.shimmer { position: relative; overflow: hidden; }
+.shimmer::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+  animation: shim 1.6s infinite;
+}
+@keyframes shim { from { transform: translateX(-100%);} to { transform: translateX(100%);} }
+.marquee { animation: marq 26s linear infinite; }
+@keyframes marq { from { transform: translateX(0);} to { transform: translateX(-50%);} }
+.ring-anim { transition: stroke-dashoffset 1.2s cubic-bezier(.22,1,.36,1); }
+.tick { animation: tickin .45s cubic-bezier(.22,1,.36,1) both; }
+@keyframes tickin { from { opacity: 0; transform: translateY(10px) scale(.98);} to { opacity: 1; transform: none;} }
