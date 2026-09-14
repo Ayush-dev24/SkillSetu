@@ -7,6 +7,7 @@ import { extractSkillsFromText, apiSend, readinessTier, smartFetch, skillVerific
 import { SectionTitle, Chip, ReadinessRing, SkillBar, Stat } from '../components/ui';
 import OpportunityCard from '../components/OpportunityCard';
 import CareerMatchSection from '../components/CareerMatchSection';
+import { SkillsCertificationsSection } from '../components/SkillsCertificationsSection';
 import { matchForOpportunity } from '../lib/engine';
 import type { MediatorMatchResponse } from '../lib/engine';
 
@@ -207,15 +208,30 @@ export default function Profile() {
           <p className="mb-1 flex items-center gap-1.5 font-bold text-[#07382c]"><BadgeCheck size={17} className="text-[#0d7a5f]" /> Skill map · {mySkills.length} skills</p>
           <p className="mb-3 text-[13px] text-[#5a6a62]">Green shields are verified by college/company. Unverified skills can be endorsed after gigs.</p>
           <div className="grid max-h-[380px] gap-2 overflow-y-auto pr-1">
-            {mySkills.map((s) => (
-              <div key={s.id} className="group relative">
-                <SkillBar name={s.skill_name} pct={s.proficiency_pct} verified={s.verified} />
-                <div className="mt-1 flex items-center justify-between px-1 text-[11px] font-semibold text-[#8a978f]">
-                  <span>{s.category} · {s.source}</span>
-                  <button onClick={() => removeSkill(s.id)} className="flex items-center gap-0.5 text-[#dc2626]/70 hover:text-[#dc2626]"><Trash2 size={12} /> remove</button>
+            {mySkills.map((s) => {
+              const decision = s.verification_decision || (s.verified ? 'COLLEGE VERIFIED' : 'NOT VERIFIED');
+              return (
+                <div key={s.id} className="group relative">
+                  <SkillBar name={s.skill_name} pct={s.proficiency_pct} verified={s.verified} />
+                  <div className="mt-1 flex flex-wrap items-center justify-between px-1 text-[11px] font-semibold text-[#8a978f]">
+                    <div className="flex items-center gap-1.5">
+                      <span>{s.category} · {s.source}</span>
+                      {decision === 'COLLEGE VERIFIED' && (
+                        <span className="rounded-full bg-[#0d7a5f] px-2 py-0.2 text-[10px] font-black text-white">
+                          COLLEGE VERIFIED
+                        </span>
+                      )}
+                      {decision === 'REJECTED' && (
+                        <span className="rounded-full bg-[#dc2626] px-2 py-0.2 text-[10px] font-black text-white">
+                          REJECTED
+                        </span>
+                      )}
+                    </div>
+                    <button onClick={() => removeSkill(s.id)} className="flex items-center gap-0.5 text-[#dc2626]/70 hover:text-[#dc2626]"><Trash2 size={12} /> remove</button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {mySkills.length === 0 && <p className="text-sm text-gray-500">No skills yet — parse your resume to begin.</p>}
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
@@ -289,6 +305,9 @@ export default function Profile() {
 
       {/* Mediator-backed career match: verified jobs, skill verification, gaps */}
       <CareerMatchSection compact />
+
+      {/* Skills & Certifications section with file upload & AI analysis */}
+      <SkillsCertificationsSection />
 
       {/* Trust strip */}
       <div className="mt-6 flex flex-wrap items-center gap-2 rounded-2xl bg-[#07382c] p-4 text-[13px] text-[#cfe6da]">

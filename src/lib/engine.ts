@@ -5,9 +5,15 @@ export interface Student {
   resume_text: string; portfolio_url: string;
 }
 
+export type SkillVerificationDecision = 'COLLEGE VERIFIED' | 'REJECTED' | 'NOT VERIFIED';
+
 export interface StudentSkill {
   id: number; student_id: number; skill_name: string; category: string;
   level: number; proficiency_pct: number; verified: boolean; source: string;
+  verification_decision?: SkillVerificationDecision;
+  verified_by?: string;
+  decision_timestamp?: string;
+  teacher_remark?: string;
 }
 
 export interface Opportunity {
@@ -30,10 +36,51 @@ export interface Course { id: number; title: string; provider: string; duration:
 export interface SkillDemand { id: number; skill_name: string; category: string; demand_score: number; growth_pct: number; avg_stipend_boost: string; openings: number; }
 export interface Placement { id: number; student_name: string; college: string; company_name: string; role_title: string; package_text: string; year: number; via: string; }
 export interface Application { id: number; student_id: number; opportunity_id: number; status: string; match_score: number; cover_note: string; applied_at: string; }
+export interface CertAnalysisResult {
+  status: 'ANALYSIS PASSED' | 'NEEDS REVIEW' | 'ANALYSIS FAILED';
+  reasons: string[];
+  extracted_info: {
+    skill_name?: string;
+    certificate_name?: string;
+    issuing_organization?: string;
+    certificate_id?: string;
+    issue_date?: string;
+    expiry_date?: string;
+    verification_url?: string;
+    has_qr_code?: boolean;
+    has_cert_id?: boolean;
+    has_verification_url?: boolean;
+  };
+  inconsistencies: string[];
+}
+
+export type CertVerificationStatus = 'VERIFIED' | 'NEEDS REVIEW' | 'UNVERIFIED' | 'INVALID' | 'EXPIRED';
+
+export interface CertVerificationEvidence {
+  verification_method: 'PUBLIC_URL_HTTP' | 'ISSUER_API' | 'QR_DECODE' | 'MANUAL_OR_NONE';
+  issuer: string;
+  certificate_id?: string;
+  verification_url?: string;
+  timestamp: string;
+  result: CertVerificationStatus;
+  details: string;
+  http_status_code?: number;
+  confirmed_skills?: string[];
+  expires_at?: string;
+}
+
 export interface Certificate {
   id: number; cert_code: string; student_id: number; student_name: string;
   opportunity_id: number; opportunity_title: string; company_name: string;
   rating: number; feedback: string; skills_validated: string[]; issued_at: string;
+  cert_file_url?: string;
+  cert_file_name?: string;
+  cert_id_number?: string;
+  verification_url?: string;
+  expiry_date?: string;
+  analysis_result?: CertAnalysisResult;
+  verification_status?: CertVerificationStatus;
+  verification_evidence?: CertVerificationEvidence;
 }
 export interface TaskWorkspace {
   id: number; application_id: number | null; student_id: number; opportunity_id: number;

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { GraduationCap, TrendingDown, CircleAlert, Trophy, Briefcase } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SectionTitle, Stat, Chip, SkillBar } from '../components/ui';
+import { TeacherStudentVerificationSection } from '../components/TeacherStudentVerificationSection';
 
 function Bar({ label, value, max, color, sub }: { label: string; value: number; max: number; color: string; sub?: string }) {
   return (
@@ -144,6 +145,9 @@ export default function College() {
           </div>
         </div>
       </div>
+
+      {/* Teacher/College Skill Verification Portal */}
+      <TeacherStudentVerificationSection />
     </div>
   );
 }

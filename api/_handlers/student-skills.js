@@ -51,37 +51,63 @@ export default async function handler(req, res) {
       if (!b.id) return res.status(400).json({ error: 'id is required' });
       const { data: existing } = await supabase.from('student_skills').select('student_id').eq('id', b.id).single();
       if (!existing) return res.status(404).json({ error: 'Skill not found.' });
-      // Verifying a skill is a company/college/ministry action.
-      const wantsVerify = b.verified === true;
-      const auth = wantsVerify
+      // Verifying a skill is a company/college/ministry action. Students CANNOT set verification decision or verified status.
+      const isTeacherOrOrgAction = b.verified !== undefined || b.verification_decision !== undefined;
+      const auth = isTeacherOrOrgAction
         ? await requireRole(req, res, ['company', 'college', 'ministry'])
         : await requireRole(req, res, ['student']);
       if (!auth) return;
-      if (!wantsVerify && !(await ownsStudent(auth, existing.student_id))) {
+      if (!isTeacherOrOrgAction && !(await ownsStudent(auth, existing.student_id))) {
         return res.status(403).json({ error: 'You can only edit your own skills.' });
       }
-      const allowed = wantsVerify
-        ? ['verified', 'source']
+
+      const allowed = isTeacherOrOrgAction
+        ? ['verified', 'source', 'verification_decision', 'verified_by', 'decision_timestamp', 'teacher_remark']
         : ['level', 'proficiency_pct', 'category', 'skill_name', 'state'];
+
       const patch = {};
       for (const k of allowed) if (b[k] !== undefined) patch[k] = b[k];
+
+      if (patch.verification_decision) {
+        const dec = String(patch.verification_decision).toUpperCase();
+        if (dec === 'COLLEGE VERIFIED' || dec === 'APPROVED') {
+          patch.verification_decision = 'COLLEGE VERIFIED';
+          patch.verified = true;
+          patch.source = 'College Verified';
+        } else if (dec === 'REJECTED') {
+          patch.verification_decision = 'REJECTED';
+          patch.verified = false;
+        } else {
+          patch.verification_decision = 'NOT VERIFIED';
+          patch.verified = false;
+        }
+        patch.decision_timestamp = patch.decision_timestamp || new Date().toISOString();
+        patch.verified_by = patch.verified_by || auth.profile?.email || 'College Administrator / Teacher';
+      }
+
       if (patch.level != null) patch.level = Math.max(1, Math.min(5, Number(patch.level) || 3));
       if (patch.proficiency_pct != null) patch.proficiency_pct = Math.max(0, Math.min(100, Number(patch.proficiency_pct) || 0));
       if (typeof patch.skill_name === 'string') patch.skill_name = patch.skill_name.trim().slice(0, 80);
-      // The engine's evidence-based state machine drives verification:
-      // 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'NEEDS_EVIDENCE' | 'UNVERIFIED'.
-      // The column may not exist yet — fall back gracefully on schema error.
-      if (typeof patch.state === 'string') {
-        const st = String(patch.state).toUpperCase();
-        if (['VERIFIED', 'PARTIALLY_VERIFIED', 'NEEDS_EVIDENCE', 'UNVERIFIED'].includes(st)) {
-          patch.verified = st === 'VERIFIED' || st === 'PARTIALLY_VERIFIED';
-          patch.state = st;
-        } else delete patch.state;
-      }
+
+      // Save to Supabase (with fallback if schema lacks decision columns)
       let { data, error } = await supabase.from('student_skills').update(patch).eq('id', b.id).select().single();
-      if (error && /column.*state/i.test(error.message)) {
-        delete patch.state;
-        ({ data, error } = await supabase.from('student_skills').update(patch).eq('id', b.id).select().single());
+      if (error && (error.message.includes('verification_decision') || error.message.includes('verified_by') || error.message.includes('decision_timestamp') || error.message.includes('teacher_remark'))) {
+        const fallbackPatch = { ...patch };
+        delete fallbackPatch.verification_decision;
+        delete fallbackPatch.verified_by;
+        delete fallbackPatch.decision_timestamp;
+        delete fallbackPatch.teacher_remark;
+        const res2 = await supabase.from('student_skills').update(fallbackPatch).eq('id', b.id).select().single();
+        data = res2.data;
+        error = res2.error;
+      }
+      if (data) {
+        if (patch.verification_decision && !data.verification_decision) {
+          data.verification_decision = patch.verification_decision;
+          data.verified_by = patch.verified_by;
+          data.decision_timestamp = patch.decision_timestamp;
+          data.teacher_remark = patch.teacher_remark;
+        }
       }
       if (error) throw error;
       return res.status(200).json(data);
