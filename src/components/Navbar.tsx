@@ -24,7 +24,7 @@ const ROLE_META: Record<Role, { label: string; color: string }> = {
 };
 
 export default function Navbar() {
-  const { student, students, overview, setStudentId, studentId } = useApp();
+  const { student, overview } = useApp();
   const { role, isAuthed, profile, signOut, authEmail } = useAuth();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -83,18 +83,6 @@ export default function Navbar() {
               >
                 {ROLE_META[role].label}
               </span>
-              {role === 'student' && students.length > 0 && (
-                <select
-                  value={studentId}
-                  onChange={(e) => setStudentId(Number(e.target.value))}
-                  className="hidden rounded-lg border border-[#d8cdae] bg-white px-2 py-1.5 text-xs font-semibold text-[#07382c] outline-none sm:block"
-                  title="Demo student profile linked to your login"
-                >
-                  {students.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name.split(' ')[0]} · {s.readiness_score}</option>
-                  ))}
-                </select>
-              )}
               <NavLink
                 to="/profile"
                 className="hidden items-center gap-2 rounded-full border border-[#d8cdae] bg-white py-1 pl-1 pr-3 text-left transition hover:border-[#0d7a5f] md:flex"

@@ -13,7 +13,7 @@ import { SectionTitle, Chip, Empty } from '../components/ui';
 const RADII = [50, 150, 500, 2000];
 
 export default function OpportunityMap() {
-  const { opportunities, companies, mySkills, loading, feed, feedMeta, feedLoading } = useApp();
+  const { opportunities, companies, mySkills, loading, feed, feedMeta, feedLoading, fetchFeed } = useApp();
   const { isAuthed, authToken } = useAuth();
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -80,6 +80,12 @@ export default function OpportunityMap() {
     const t = setTimeout(() => setAlertMsg(''), 9000);
     return () => clearTimeout(t);
   }, [alertsOn, newSinceSeen]);
+
+  // Load the full job feed when the map page is opened (may not have been
+  // fetched yet if the user landed directly on /map without visiting /opportunities).
+  useEffect(() => {
+    fetchFeed({ sort: 'recent', limit: 200, page: 1 }, true);
+  }, [fetchFeed]);
 
   const withDistance = useMemo(() => {
     const internal = opportunities

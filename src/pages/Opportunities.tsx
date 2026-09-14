@@ -66,9 +66,22 @@ export default function Opportunities() {
     return () => clearTimeout(timer);
   }, [search, city, location, company, skillsQuery, workMode, employmentType, experience, minTrust, sort, page, fetchFeed]);
 
+  // Internal DB opportunities mapped to the same row shape.
+  const internalRows = useMemo(() => {
+    return opportunities
+      .filter((o) => o.status === 'open')
+      .map((o) => {
+        const co = companies.find((c) => c.id === o.company_id);
+        const [lat, lng] = opportunityCoords(o, co?.location);
+        let km: number | null = null;
+        if (geo.coords && !o.remote) km = haversineKm(geo.coords, { lat, lng });
+        return { o, co, km, lat, lng, feedJob: null as FeedJob | null };
+      });
+  }, [opportunities, companies, geo.coords]);
+
   // Verified external postings merged into the same list (clearly badged).
   const externalRows = useMemo(() => {
-    if (!includeExternal) return [] as { o: (typeof opportunities)[number]; co: undefined; km: number | null; lat: number; lng: number; feedJob: FeedJob }[];
+    if (!includeExternal) return [] as { o: (typeof opportunities)[number]; co: undefined; km: number | null; lat: number; lng: number; feedJob: FeedJob | null }[];
     return feed
       .filter((j) => j.external)
       .map((j) => {
@@ -84,11 +97,12 @@ export default function Opportunities() {
           posted_at: j.posted_text, deadline: 'See source listing', color: j.color,
           external: { source: j.source, source_url: j.source_url, verified: j.verified },
         } as unknown as (typeof opportunities)[number];
-        return { o: pseudo, co: undefined, km, lat, lng, feedJob: j };
+        return { o: pseudo, co: undefined, km, lat, lng, feedJob: j as FeedJob };
       });
   }, [feed, includeExternal, geo.coords]);
 
-  const allRows = useMemo(() => externalRows, [externalRows]);
+  // Merge internal DB rows + external feed rows into one list.
+  const allRows = useMemo(() => [...internalRows, ...externalRows], [internalRows, externalRows]);
 
   const filtered = useMemo(() => {
     const s = search.toLowerCase();
@@ -222,7 +236,7 @@ export default function Opportunities() {
       </div>
 
       <Link to="/map" className="mb-4 flex items-center justify-between gap-3 rounded-2xl bg-[#07382c] px-4 py-3 text-white card-shadow transition hover:bg-[#095844]">
-        <span className="flex items-center gap-2 text-sm font-bold"><MapIcon size={17} className="text-[#f5d48a]" /> Prefer a map? See all {opportunities.filter((o) => o.status === 'open').length} jobs plotted live across India.</span>
+        <span className="flex items-center gap-2 text-sm font-bold"><MapIcon size={17} className="text-[#f5d48a]" /> Prefer a map? See all {allRows.length} jobs plotted live across India.</span>
         <span className="shrink-0 rounded-lg bg-[#f5a623] px-3 py-1.5 text-xs font-black text-[#07382c]">Open map →</span>
       </Link>
 
@@ -349,6 +363,12 @@ export default function Opportunities() {
               <div className="grid gap-4 md:grid-cols-2">
                 {rest.filter((x) => !x.feedJob).map(({ o, km, lat, lng }) => <OpportunityCard key={o.id} opp={o} skills={mySkills} distanceKm={km} userCoords={geo.coords} destCoords={{ lat, lng }} />)}
               </div>
+            </div>
+          )}
+          {/* Internal DB-based instant gigs that aren't external */}
+          {filtered.filter((x) => !x.feedJob && x.o.urgency === 'instant').length > 0 && filtered.filter((x) => x.feedJob).length === 0 && (
+            <div className="mt-2 rounded-2xl border border-[#e5dcc3] bg-[#faf7ef] p-4 text-sm text-[#5a6a62]">
+              <span className="font-bold text-[#07382c]">💡 Tip:</span> Enable <b>External boards</b> above to see verified listings from Naukri, LinkedIn, Internshala and more.
             </div>
           )}
           {type !== 'all' && (
